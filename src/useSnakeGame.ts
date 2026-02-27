@@ -52,45 +52,49 @@ function checkSelfCollision(head: Position, body: Position[]): boolean {
   return body.some((s) => s.x === head.x && s.y === head.y);
 }
 
-interface TickState {
+export interface RenderState {
   snake: Position[];
+  prevSnake: Position[];
   apple: Position;
-  direction: Direction;
-  score: number;
+  lastTickTime: number;
 }
 
 export function useSnakeGame() {
   const [gameState, setGameState] = useState<GameState>(GameState.TITLE);
-  const [snake, setSnake] = useState<Position[]>([]);
-  const [apple, setApple] = useState<Position>({ x: 0, y: 0 });
-  const [direction, setDirection] = useState<Direction>(Direction.RIGHT);
   const [score, setScore] = useState(0);
 
-  const tickStateRef = useRef<TickState>({ snake: [], apple: { x: 0, y: 0 }, direction: Direction.RIGHT, score: 0 });
+  const renderStateRef = useRef<RenderState>({
+    snake: [],
+    prevSnake: [],
+    apple: { x: 0, y: 0 },
+    lastTickTime: 0,
+  });
+  const directionRef = useRef<Direction>(Direction.RIGHT);
   const directionQueueRef = useRef<Direction[]>([]);
-
-  useEffect(() => {
-    tickStateRef.current = { snake, apple, direction, score };
-  }, [snake, apple, direction, score]);
 
   const startGame = useCallback(() => {
     const startPos = getRandomStartPosition();
     const initialSnake = [startPos];
     const initialApple = placeApple(initialSnake);
-    setSnake(initialSnake);
-    setApple(initialApple);
-    setDirection(Direction.RIGHT);
-    setScore(0);
+    directionRef.current = Direction.RIGHT;
     directionQueueRef.current = [];
-    // Also update ref immediately so the first tick reads correct state
-    tickStateRef.current = { snake: initialSnake, apple: initialApple, direction: Direction.RIGHT, score: 0 };
+    renderStateRef.current = {
+      snake: initialSnake,
+      prevSnake: initialSnake,
+      apple: initialApple,
+      lastTickTime: performance.now(),
+    };
+    setScore(0);
     setGameState(GameState.PLAYING);
   }, []);
 
   const togglePause = useCallback(() => {
     setGameState((prev) => {
       if (prev === GameState.PLAYING) return GameState.PAUSED;
-      if (prev === GameState.PAUSED) return GameState.PLAYING;
+      if (prev === GameState.PAUSED) {
+        renderStateRef.current.lastTickTime = performance.now();
+        return GameState.PLAYING;
+      }
       return prev;
     });
   }, []);
@@ -108,10 +112,10 @@ export function useSnakeGame() {
     if (gameState !== GameState.PLAYING) return;
 
     const interval = setInterval(() => {
-      const state = tickStateRef.current;
+      const rs = renderStateRef.current;
 
       // Process direction queue
-      let currentDir = state.direction;
+      let currentDir = directionRef.current;
       while (directionQueueRef.current.length > 0) {
         const nextDir = directionQueueRef.current.shift()!;
         if (!isOpposite(currentDir, nextDir)) {
@@ -119,8 +123,9 @@ export function useSnakeGame() {
           break;
         }
       }
+      directionRef.current = currentDir;
 
-      const snakeNow = state.snake;
+      const snakeNow = rs.snake;
       const newHead = moveHead(snakeNow[0], currentDir);
 
       if (checkWallCollision(newHead) || checkSelfCollision(newHead, snakeNow)) {
@@ -128,22 +133,26 @@ export function useSnakeGame() {
         return;
       }
 
-      if (newHead.x === state.apple.x && newHead.y === state.apple.y) {
+      const now = performance.now();
+
+      if (newHead.x === rs.apple.x && newHead.y === rs.apple.y) {
         const grownSnake = [newHead, ...snakeNow];
-        const newScore = state.score + 1;
         const newApple = placeApple(grownSnake);
-        tickStateRef.current = { snake: grownSnake, apple: newApple, direction: currentDir, score: newScore };
-        setSnake(grownSnake);
-        setApple(newApple);
-        setScore(newScore);
+        renderStateRef.current = {
+          snake: grownSnake,
+          prevSnake: snakeNow,
+          apple: newApple,
+          lastTickTime: now,
+        };
+        setScore((s) => s + 1);
       } else {
         const movedSnake = [newHead, ...snakeNow.slice(0, -1)];
-        tickStateRef.current = { ...state, snake: movedSnake, direction: currentDir };
-        setSnake(movedSnake);
-      }
-
-      if (currentDir !== state.direction) {
-        setDirection(currentDir);
+        renderStateRef.current = {
+          snake: movedSnake,
+          prevSnake: snakeNow,
+          apple: rs.apple,
+          lastTickTime: now,
+        };
       }
     }, TICK_SPEED);
 
@@ -152,10 +161,8 @@ export function useSnakeGame() {
 
   return {
     gameState,
-    snake,
-    apple,
-    direction,
     score,
+    renderStateRef,
     startGame,
     togglePause,
     quitGame,

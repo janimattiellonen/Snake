@@ -1,26 +1,114 @@
-import { type ReactElement, useEffect } from 'react';
-import { Direction, type Position } from '../types';
-import { COLORS, GRID_HEIGHT, GRID_WIDTH } from '../constants';
+import { type RefObject, useEffect, useRef } from 'react';
+import { Direction } from '../types';
+import { COLORS, GRID_HEIGHT, GRID_WIDTH, TICK_SPEED } from '../constants';
+import type { RenderState } from '../useSnakeGame';
 
 interface GameBoardProps {
-  snake: Position[];
-  apple: Position;
   score: number;
+  renderStateRef: RefObject<RenderState>;
   onDirectionChange: (dir: Direction) => void;
   onPause: () => void;
 }
 
-function getCellColor(x: number, y: number, snake: Position[], apple: Position): string {
-  if (apple.x === x && apple.y === y) return COLORS.apple;
-  for (let i = 0; i < snake.length; i++) {
-    if (snake[i].x === x && snake[i].y === y) {
-      return i === 0 ? COLORS.snakeHead : COLORS.snakeBody;
-    }
-  }
-  return COLORS.freeSpace;
+const BORDER_PX = 4;
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
 }
 
-export function GameBoard({ snake, apple, score, onDirectionChange, onPause }: GameBoardProps) {
+export function GameBoard({ score, renderStateRef, onDirectionChange, onPause }: GameBoardProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Animation loop — reads directly from renderStateRef, no React state in the hot path
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let rafId: number;
+    let cachedWidth = 0;
+    let cachedHeight = 0;
+
+    function resize() {
+      const container = containerRef.current;
+      if (!container || !canvas) return;
+      const rect = container.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      cachedWidth = rect.width;
+      cachedHeight = rect.height;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(containerRef.current!);
+
+    function loop() {
+      const rs = renderStateRef.current;
+      const width = cachedWidth;
+      const height = cachedHeight;
+
+      const gridW = width - BORDER_PX * 2;
+      const gridH = height - BORDER_PX * 2;
+      const cellW = gridW / GRID_WIDTH;
+      const cellH = gridH / GRID_HEIGHT;
+
+      // Interpolation progress
+      const elapsed = performance.now() - rs.lastTickTime;
+      const progress = Math.min(elapsed / TICK_SPEED, 1);
+
+      // Border
+      ctx!.fillStyle = COLORS.edge;
+      ctx!.fillRect(0, 0, width, height);
+
+      // Background
+      ctx!.fillStyle = COLORS.freeSpace;
+      ctx!.fillRect(BORDER_PX, BORDER_PX, gridW, gridH);
+
+      // Apple
+      ctx!.fillStyle = COLORS.apple;
+      ctx!.fillRect(
+        BORDER_PX + rs.apple.x * cellW,
+        BORDER_PX + rs.apple.y * cellH,
+        cellW,
+        cellH,
+      );
+
+      // Snake with interpolation
+      const { snake, prevSnake } = rs;
+      for (let i = 0; i < snake.length; i++) {
+        const curr = snake[i];
+        const prev = i < prevSnake.length ? prevSnake[i] : curr;
+
+        const renderX = lerp(prev.x, curr.x, progress);
+        const renderY = lerp(prev.y, curr.y, progress);
+
+        ctx!.fillStyle = i === 0 ? COLORS.snakeHead : COLORS.snakeBody;
+        ctx!.fillRect(
+          BORDER_PX + renderX * cellW,
+          BORDER_PX + renderY * cellH,
+          cellW,
+          cellH,
+        );
+      }
+
+      rafId = requestAnimationFrame(loop);
+    }
+    rafId = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
+  }, [renderStateRef]);
+
+  // Keyboard input
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       switch (e.key) {
@@ -58,33 +146,11 @@ export function GameBoard({ snake, apple, score, onDirectionChange, onPause }: G
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onDirectionChange, onPause]);
 
-  const cells: ReactElement[] = [];
-  for (let y = 0; y < GRID_HEIGHT; y++) {
-    for (let x = 0; x < GRID_WIDTH; x++) {
-      const color = getCellColor(x, y, snake, apple);
-      cells.push(
-        <div
-          key={`${x}-${y}`}
-          className="cell"
-          style={{ backgroundColor: color }}
-        />,
-      );
-    }
-  }
-
   return (
     <div className="game-board-container">
       <div className="scoreboard">Score: {score}</div>
-      <div className="board-border">
-        <div
-          className="game-grid"
-          style={{
-            gridTemplateColumns: `repeat(${GRID_WIDTH}, 1fr)`,
-            gridTemplateRows: `repeat(${GRID_HEIGHT}, 1fr)`,
-          }}
-        >
-          {cells}
-        </div>
+      <div className="canvas-wrapper" ref={containerRef}>
+        <canvas ref={canvasRef} className="game-canvas-element" />
       </div>
     </div>
   );

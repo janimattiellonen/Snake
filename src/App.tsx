@@ -9,9 +9,8 @@ import './App.css';
 function App() {
   const {
     gameState,
-    snake,
-    apple,
     score,
+    renderStateRef,
     startGame,
     togglePause,
     quitGame,
@@ -28,9 +27,8 @@ function App() {
         {(gameState === GameState.PLAYING || gameState === GameState.PAUSED) && (
           <div className="game-wrapper">
             <GameBoard
-              snake={snake}
-              apple={apple}
               score={score}
+              renderStateRef={renderStateRef}
               onDirectionChange={changeDirection}
               onPause={togglePause}
             />
@@ -43,9 +41,8 @@ function App() {
         {gameState === GameState.GAME_OVER && (
           <div className="game-wrapper">
             <GameBoard
-              snake={snake}
-              apple={apple}
               score={score}
+              renderStateRef={renderStateRef}
               onDirectionChange={() => {}}
               onPause={() => {}}
             />

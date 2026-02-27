@@ -76,22 +76,13 @@
   font-weight: bold;
 }
 
-.board-border {
-  background-color: #181717;
-  padding: 4px;
+.canvas-wrapper {
   flex: 1;
-  display: flex;
+  position: relative;
 }
 
-.game-grid {
-  display: grid;
-  width: 100%;
-  height: 100%;
-  gap: 1px;
-  background-color: #181717;
-}
-
-.cell {
+.game-canvas-element {
+  display: block;
   width: 100%;
   height: 100%;
 }
