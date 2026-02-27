@@ -8,6 +8,7 @@ interface GameBoardProps {
   renderStateRef: RefObject<RenderState>;
   onDirectionChange: (dir: Direction) => void;
   onPause: () => void;
+  onSimplePause: () => void;
 }
 
 const BORDER_PX = 4;
@@ -16,7 +17,7 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-export function GameBoard({ score, renderStateRef, onDirectionChange, onPause }: GameBoardProps) {
+export function GameBoard({ score, renderStateRef, onDirectionChange, onPause, onSimplePause }: GameBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -139,12 +140,16 @@ export function GameBoard({ score, renderStateRef, onDirectionChange, onPause }:
         case 'Escape':
           onPause();
           break;
+        case 'p':
+        case 'P':
+          onSimplePause();
+          break;
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onDirectionChange, onPause]);
+  }, [onDirectionChange, onPause, onSimplePause]);
 
   return (
     <div className="game-board-container">

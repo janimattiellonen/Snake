@@ -3,6 +3,7 @@ import { useSnakeGame } from './useSnakeGame';
 import { TitleScreen } from './components/TitleScreen';
 import { GameBoard } from './components/GameBoard';
 import { PauseDialog } from './components/PauseDialog';
+import { PauseScreen } from './components/PauseScreen';
 import { GameOverScreen } from './components/GameOverScreen';
 import './App.css';
 
@@ -13,9 +14,15 @@ function App() {
     renderStateRef,
     startGame,
     togglePause,
+    simplePause,
+    simpleResume,
     quitGame,
     changeDirection,
   } = useSnakeGame();
+
+  const isInGame = gameState === GameState.PLAYING
+    || gameState === GameState.PAUSED
+    || gameState === GameState.SIMPLE_PAUSED;
 
   return (
     <div className="app">
@@ -24,16 +31,20 @@ function App() {
           <TitleScreen onStart={startGame} />
         )}
 
-        {(gameState === GameState.PLAYING || gameState === GameState.PAUSED) && (
+        {isInGame && (
           <div className="game-wrapper">
             <GameBoard
               score={score}
               renderStateRef={renderStateRef}
               onDirectionChange={changeDirection}
               onPause={togglePause}
+              onSimplePause={simplePause}
             />
             {gameState === GameState.PAUSED && (
               <PauseDialog onQuit={quitGame} onContinue={togglePause} />
+            )}
+            {gameState === GameState.SIMPLE_PAUSED && (
+              <PauseScreen onResume={simpleResume} />
             )}
           </div>
         )}
@@ -45,6 +56,7 @@ function App() {
               renderStateRef={renderStateRef}
               onDirectionChange={() => {}}
               onPause={() => {}}
+              onSimplePause={() => {}}
             />
             <GameOverScreen score={score} onRestart={startGame} />
           </div>

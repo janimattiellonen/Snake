@@ -99,6 +99,23 @@ export function useSnakeGame() {
     });
   }, []);
 
+  const simplePause = useCallback(() => {
+    setGameState((prev) => {
+      if (prev === GameState.PLAYING) return GameState.SIMPLE_PAUSED;
+      return prev;
+    });
+  }, []);
+
+  const simpleResume = useCallback(() => {
+    setGameState((prev) => {
+      if (prev === GameState.SIMPLE_PAUSED) {
+        renderStateRef.current.lastTickTime = performance.now();
+        return GameState.PLAYING;
+      }
+      return prev;
+    });
+  }, []);
+
   const quitGame = useCallback(() => {
     setGameState(GameState.TITLE);
   }, []);
@@ -165,6 +182,8 @@ export function useSnakeGame() {
     renderStateRef,
     startGame,
     togglePause,
+    simplePause,
+    simpleResume,
     quitGame,
     changeDirection,
   };

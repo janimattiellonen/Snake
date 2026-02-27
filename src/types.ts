@@ -16,6 +16,7 @@ export const GameState = {
   TITLE: 'TITLE',
   PLAYING: 'PLAYING',
   PAUSED: 'PAUSED',
+  SIMPLE_PAUSED: 'SIMPLE_PAUSED',
   GAME_OVER: 'GAME_OVER',
 } as const;
 
