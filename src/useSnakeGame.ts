@@ -52,12 +52,42 @@ function checkSelfCollision(head: Position, body: Position[]): boolean {
   return body.some((s) => s.x === head.x && s.y === head.y);
 }
 
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  spawnTime: number;
+}
+
+const PARTICLE_COUNT = 8;
+const PARTICLE_LIFETIME = 400;
+
+function spawnParticles(cellX: number, cellY: number, now: number): Particle[] {
+  const particles: Particle[] = [];
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const angle = (Math.PI * 2 * i) / PARTICLE_COUNT + (Math.random() - 0.5) * 0.5;
+    const speed = 1.5 + Math.random() * 2;
+    particles.push({
+      x: cellX + 0.5,
+      y: cellY + 0.5,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      spawnTime: now,
+    });
+  }
+  return particles;
+}
+
 export interface RenderState {
   snake: Position[];
   prevSnake: Position[];
   apple: Position;
   lastTickTime: number;
+  particles: Particle[];
 }
+
+export { PARTICLE_LIFETIME };
 
 export function useSnakeGame() {
   const [gameState, setGameState] = useState<GameState>(GameState.TITLE);
@@ -68,6 +98,7 @@ export function useSnakeGame() {
     prevSnake: [],
     apple: { x: 0, y: 0 },
     lastTickTime: 0,
+    particles: [],
   });
   const directionRef = useRef<Direction>(Direction.RIGHT);
   const directionQueueRef = useRef<Direction[]>([]);
@@ -83,6 +114,7 @@ export function useSnakeGame() {
       prevSnake: initialSnake,
       apple: initialApple,
       lastTickTime: performance.now(),
+      particles: [],
     };
     setScore(0);
     setGameState(GameState.PLAYING);
@@ -152,14 +184,19 @@ export function useSnakeGame() {
 
       const now = performance.now();
 
+      // Filter out expired particles
+      const liveParticles = rs.particles.filter((p) => now - p.spawnTime < PARTICLE_LIFETIME);
+
       if (newHead.x === rs.apple.x && newHead.y === rs.apple.y) {
         const grownSnake = [newHead, ...snakeNow];
         const newApple = placeApple(grownSnake);
+        const newParticles = [...liveParticles, ...spawnParticles(rs.apple.x, rs.apple.y, now)];
         renderStateRef.current = {
           snake: grownSnake,
           prevSnake: snakeNow,
           apple: newApple,
           lastTickTime: now,
+          particles: newParticles,
         };
         setScore((s) => s + 1);
       } else {
@@ -169,6 +206,7 @@ export function useSnakeGame() {
           prevSnake: snakeNow,
           apple: rs.apple,
           lastTickTime: now,
+          particles: liveParticles,
         };
       }
     }, TICK_SPEED);

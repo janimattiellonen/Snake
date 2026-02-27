@@ -1,7 +1,7 @@
 import { type RefObject, useEffect, useRef } from 'react';
 import { Direction } from '../types';
 import { COLORS, GRID_HEIGHT, GRID_WIDTH, TICK_SPEED } from '../constants';
-import type { RenderState } from '../useSnakeGame';
+import { PARTICLE_LIFETIME, type RenderState } from '../useSnakeGame';
 
 interface GameBoardProps {
   score: number;
@@ -98,6 +98,22 @@ export function GameBoard({ score, renderStateRef, onDirectionChange, onPause, o
           cellH,
         );
       }
+
+      // Particles
+      const now = performance.now();
+      for (const p of rs.particles) {
+        const age = now - p.spawnTime;
+        if (age >= PARTICLE_LIFETIME) continue;
+        const t = age / PARTICLE_LIFETIME;
+        const alpha = 1 - t;
+        const size = cellW * 0.35 * (1 - t * 0.6);
+        const px = BORDER_PX + (p.x + p.vx * t) * cellW;
+        const py = BORDER_PX + (p.y + p.vy * t) * cellH;
+        ctx!.globalAlpha = alpha;
+        ctx!.fillStyle = COLORS.apple;
+        ctx!.fillRect(px - size / 2, py - size / 2, size, size);
+      }
+      ctx!.globalAlpha = 1;
 
       rafId = requestAnimationFrame(loop);
     }
