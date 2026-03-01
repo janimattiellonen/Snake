@@ -1,9 +1,17 @@
+import { useEffect, useRef } from 'react';
+
 interface PauseDialogProps {
   onQuit: () => void;
   onContinue: () => void;
 }
 
 export function PauseDialog({ onQuit, onContinue }: PauseDialogProps) {
+  const continueRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    continueRef.current?.focus();
+  }, []);
+
   return (
     <div className="overlay">
       <div className="pause-dialog">
@@ -12,7 +20,7 @@ export function PauseDialog({ onQuit, onContinue }: PauseDialogProps) {
           <button className="quit-button" onClick={onQuit}>
             Quit
           </button>
-          <button className="continue-button" onClick={onContinue}>
+          <button ref={continueRef} className="continue-button" onClick={onContinue}>
             Continue
           </button>
         </div>

@@ -6,6 +6,7 @@ import { POWERUP_REGISTRY, PowerupType } from '../powerups';
 
 interface GameBoardProps {
   score: number;
+  darkMode: boolean;
   renderStateRef: RefObject<RenderState>;
   onDirectionChange: (dir: Direction) => void;
   onPause: () => void;
@@ -18,9 +19,13 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-export function GameBoard({ score, renderStateRef, onDirectionChange, onPause, onSimplePause }: GameBoardProps) {
+export function GameBoard({ score, darkMode, renderStateRef, onDirectionChange, onPause, onSimplePause }: GameBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const darkModeRef = useRef(darkMode);
+  useEffect(() => {
+    darkModeRef.current = darkMode;
+  }, [darkMode]);
 
   // Animation loop — reads directly from renderStateRef, no React state in the hot path
   useEffect(() => {
@@ -72,7 +77,7 @@ export function GameBoard({ score, renderStateRef, onDirectionChange, onPause, o
       ctx!.fillRect(0, 0, width, height);
 
       // Background
-      ctx!.fillStyle = COLORS.freeSpace;
+      ctx!.fillStyle = darkModeRef.current ? COLORS.freeSpaceDark : COLORS.freeSpace;
       ctx!.fillRect(BORDER_PX, BORDER_PX, gridW, gridH);
 
       // Apple
