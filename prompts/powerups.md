@@ -80,3 +80,22 @@ with the head and tries catching up. Also, the magnet effect is a bit slugish. C
 the apple getting drawn closer to the head a bit smoother. 
 
 When the magnet powerup is active, no visible hints is given.
+
+## Slow motion improvements
+
+The snake's movement, when "Slow motion" powerup is active, is sluggish. Can you make the snake's movement slow but smooth?
+
+## Custom probability
+
+Add support for varying probability of a certain powerup to show up. The more powerful powerup, the less
+probability for it to show up next. Define a probability scale that can be used. One end of the scale
+means that a certain powerup's probability is high and the other end means a low probability for a certain
+powerup to show up.
+
+Current powerups:
+- Slow motion: very high probability
+- Ghost mode: high probability
+- Shield: high probability
+- Double points: low probability
+- Apple magnet: very low probability
+- Bomb: low probability
