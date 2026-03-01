@@ -99,3 +99,14 @@ Current powerups:
 - Double points: low probability
 - Apple magnet: very low probability
 - Bomb: low probability
+
+
+# Fast powerup
+
+Add a new powerupp named "Fast" that makes the snake move faster. This powerup is active as long as the
+"Slow motion" powerup. Remember to keep the snake's movement smooth. Also add the powerup to help and 
+pause menus/modals.
+
+
+# Trail Eraser 
+— Snake doesn't grow for the next 3 apples eaten (score still counts)

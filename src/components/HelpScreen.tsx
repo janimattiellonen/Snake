@@ -48,6 +48,8 @@ function getPowerupDescription(type: string): string {
   switch (type) {
     case 'SLOW_MOTION':
       return 'Slows the game down for 5 seconds.';
+    case 'FAST':
+      return 'Speeds the snake up for 5 seconds.';
     case 'GHOST_MODE':
       return 'Pass through your own body for 5 seconds.';
     case 'SHIELD':
@@ -58,6 +60,8 @@ function getPowerupDescription(type: string): string {
       return 'Pulls the apple toward your head when within 3 cells.';
     case 'BOMB':
       return 'Press Space to destroy the apple and respawn it elsewhere. Lost when another powerup is picked up.';
+    case 'TRAIL_ERASER':
+      return 'Snake doesn\'t grow for the next 3 apples eaten. Score still counts.';
     default:
       return '';
   }

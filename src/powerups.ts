@@ -2,11 +2,13 @@ import type { Position } from './types';
 
 export const PowerupType = {
   SLOW_MOTION: 'SLOW_MOTION',
+  FAST: 'FAST',
   GHOST_MODE: 'GHOST_MODE',
   SHIELD: 'SHIELD',
   DOUBLE_POINTS: 'DOUBLE_POINTS',
   APPLE_MAGNET: 'APPLE_MAGNET',
   BOMB: 'BOMB',
+  TRAIL_ERASER: 'TRAIL_ERASER',
 } as const;
 
 export type PowerupType = (typeof PowerupType)[keyof typeof PowerupType];
@@ -18,6 +20,7 @@ export interface TickModifiers {
   scoreMultiplier: number;
   appleMagnet: boolean;
   bombReady: boolean;
+  noGrow: boolean;
 }
 
 export interface EffectContext {
@@ -85,6 +88,22 @@ export const POWERUP_REGISTRY = new Map<PowerupType, PowerupDefinition>([
       onActivate: () => ({}),
       onTick: (modifiers) => {
         modifiers.tickSpeed = 250;
+      },
+    },
+  ],
+  [
+    PowerupType.FAST,
+    {
+      type: PowerupType.FAST,
+      label: 'Fast',
+      color: '#ff8800',
+      particleColor: '#ffaa33',
+      icon: 'F',
+      spawnWeight: SpawnChance.MEDIUM,
+      duration: 5000,
+      onActivate: () => ({}),
+      onTick: (modifiers) => {
+        modifiers.tickSpeed = 80;
       },
     },
   ],
@@ -179,6 +198,24 @@ export const POWERUP_REGISTRY = new Map<PowerupType, PowerupDefinition>([
       },
     },
   ],
+  [
+    PowerupType.TRAIL_ERASER,
+    {
+      type: PowerupType.TRAIL_ERASER,
+      label: 'Trail Eraser',
+      color: '#44bb88',
+      particleColor: '#66ddaa',
+      icon: 'T',
+      spawnWeight: SpawnChance.LOW,
+      duration: Infinity,
+      onActivate: () => ({ charges: 3 }),
+      onTick: (modifiers, effectState) => {
+        if ((effectState.charges as number) > 0) {
+          modifiers.noGrow = true;
+        }
+      },
+    },
+  ],
 ]);
 
 export function getDefaultModifiers(): TickModifiers {
@@ -189,6 +226,7 @@ export function getDefaultModifiers(): TickModifiers {
     scoreMultiplier: 1,
     appleMagnet: false,
     bombReady: false,
+    noGrow: false,
   };
 }
 

@@ -505,8 +505,24 @@ export function useSnakeGame() {
       const liveParticles = rs.particles.filter((p) => now - p.spawnTime < PARTICLE_LIFETIME);
 
       if (newHead.x === rs.apple.x && newHead.y === rs.apple.y) {
-        const grownSnake = [newHead, ...snakeNow];
-        const newApple = placeApple(grownSnake);
+        // Trail Eraser: score but don't grow, decrement charge
+        const shouldGrow = !modifiers.noGrow;
+        if (modifiers.noGrow) {
+          for (const effect of rs.activeEffects) {
+            if (effect.type === 'TRAIL_ERASER') {
+              const charges = (effect.effectState.charges as number) - 1;
+              effect.effectState.charges = charges;
+              if (charges <= 0) {
+                rs.activeEffects = rs.activeEffects.filter((e) => e !== effect);
+              }
+              break;
+            }
+          }
+        }
+        const resultSnake = shouldGrow
+          ? [newHead, ...snakeNow]
+          : [newHead, ...snakeNow.slice(0, -1)];
+        const newApple = placeApple(resultSnake);
         // Consume magnet charge on apple eat
         if (modifiers.appleMagnet) {
           for (const effect of rs.activeEffects) {
@@ -520,7 +536,7 @@ export function useSnakeGame() {
         const newParticles = [...liveParticles, ...spawnParticles(rs.apple.x, rs.apple.y, now)];
         renderStateRef.current = {
           ...rs,
-          snake: grownSnake,
+          snake: resultSnake,
           prevSnake: snakeNow,
           apple: newApple,
           prevApple: null,
