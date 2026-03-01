@@ -405,3 +405,126 @@
   font-size: 0.8rem;
   min-width: 1.5rem;
 }
+
+/* Game Over Buttons */
+.game-over-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* High Score Button (game over screen) */
+.high-score-button {
+  padding: 0.75rem 2rem;
+  font-size: 1.25rem;
+  background-color: #e6a817;
+  color: #181717;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+.high-score-button:hover {
+  background-color: #c99212;
+}
+
+/* High Score Form */
+.high-score-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.high-score-label {
+  font-size: 0.9rem;
+  color: #cccccc;
+}
+
+.high-score-input {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+  background-color: #1a1a1a;
+  color: #f3ecec;
+  border: 2px solid #555555;
+  border-radius: 4px;
+  width: 200px;
+  text-align: center;
+}
+
+.high-score-input:focus {
+  outline: none;
+  border-color: #e6a817;
+}
+
+.high-score-submit-button {
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  background-color: #e6a817;
+  color: #181717;
+}
+
+.high-score-submit-button:hover {
+  background-color: #c99212;
+}
+
+/* High Scores Table */
+.high-scores-empty {
+  color: #999999;
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+  margin: 1rem 0;
+}
+
+.high-scores-table-wrapper {
+  width: 100%;
+  max-width: 450px;
+  margin-bottom: 1.5rem;
+}
+
+.high-scores-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+}
+
+.high-scores-table th {
+  color: #49bd07;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #444444;
+}
+
+.high-scores-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.high-scores-rank {
+  color: #999999;
+  text-align: center;
+  width: 2rem;
+}
+
+.high-scores-name {
+  color: #f3ecec;
+}
+
+.high-scores-score {
+  color: #e6a817;
+  font-weight: bold;
+}
+
+.high-scores-date {
+  color: #ffffff;
+  font-size: 0.85rem;
+}

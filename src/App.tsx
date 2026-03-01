@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { GameState } from './types';
 import { useSnakeGame } from './useSnakeGame';
+import { loadHighScores, saveHighScore } from './highScores';
 import { TitleScreen } from './components/TitleScreen';
 import { HelpScreen } from './components/HelpScreen';
+import { HighScoresScreen } from './components/HighScoresScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { GameBoard } from './components/GameBoard';
 import { PauseDialog } from './components/PauseDialog';
@@ -10,7 +12,7 @@ import { PauseScreen } from './components/PauseScreen';
 import { GameOverScreen } from './components/GameOverScreen';
 import './App.css';
 
-type TitleSubscreen = 'main' | 'help' | 'settings';
+type TitleSubscreen = 'main' | 'help' | 'settings' | 'highscores';
 
 function loadDarkMode(): boolean {
   try {
@@ -47,6 +49,15 @@ function App() {
     }
   }
 
+  function handleSubmitHighScore(name: string) {
+    saveHighScore(name, score);
+    quitGame();
+  }
+
+  function handleBackToMain() {
+    quitGame();
+  }
+
   const isInGame = gameState === GameState.PLAYING
     || gameState === GameState.PAUSED
     || gameState === GameState.SIMPLE_PAUSED;
@@ -59,11 +70,19 @@ function App() {
             onStart={startGame}
             onHelp={() => setTitleSubscreen('help')}
             onSettings={() => setTitleSubscreen('settings')}
+            onHighScores={() => setTitleSubscreen('highscores')}
           />
         )}
 
         {gameState === GameState.TITLE && titleSubscreen === 'help' && (
           <HelpScreen onBack={() => setTitleSubscreen('main')} />
+        )}
+
+        {gameState === GameState.TITLE && titleSubscreen === 'highscores' && (
+          <HighScoresScreen
+            scores={loadHighScores()}
+            onBack={() => setTitleSubscreen('main')}
+          />
         )}
 
         {gameState === GameState.TITLE && titleSubscreen === 'settings' && (
@@ -99,13 +118,19 @@ function App() {
             <GameBoard
               score={score}
               darkMode={darkMode}
+              disableKeyboard
               renderStateRef={renderStateRef}
               onDirectionChange={() => {}}
               onPause={() => {}}
               onSimplePause={() => {}}
               onTriggerBomb={() => {}}
             />
-            <GameOverScreen score={score} onRestart={startGame} />
+            <GameOverScreen
+              score={score}
+              onRestart={startGame}
+              onSubmitHighScore={handleSubmitHighScore}
+              onBackToMain={handleBackToMain}
+            />
           </div>
         )}
       </div>
