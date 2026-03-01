@@ -7,6 +7,7 @@ import { POWERUP_REGISTRY, PowerupType } from '../powerups';
 interface GameBoardProps {
   score: number;
   darkMode: boolean;
+  disableKeyboard?: boolean;
   renderStateRef: RefObject<RenderState>;
   onDirectionChange: (dir: Direction) => void;
   onPause: () => void;
@@ -20,7 +21,7 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-export function GameBoard({ score, darkMode, renderStateRef, onDirectionChange, onPause, onSimplePause, onTriggerBomb }: GameBoardProps) {
+export function GameBoard({ score, darkMode, disableKeyboard, renderStateRef, onDirectionChange, onPause, onSimplePause, onTriggerBomb }: GameBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const darkModeRef = useRef(darkMode);
@@ -266,6 +267,8 @@ export function GameBoard({ score, darkMode, renderStateRef, onDirectionChange, 
 
   // Keyboard input
   useEffect(() => {
+    if (disableKeyboard) return;
+
     function handleKeyDown(e: KeyboardEvent) {
       switch (e.key) {
         case 'ArrowUp':
@@ -308,7 +311,7 @@ export function GameBoard({ score, darkMode, renderStateRef, onDirectionChange, 
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onDirectionChange, onPause, onSimplePause, onTriggerBomb]);
+  }, [disableKeyboard, onDirectionChange, onPause, onSimplePause, onTriggerBomb]);
 
   return (
     <div className="game-board-container">
