@@ -59,6 +59,18 @@ export interface ActiveEffect {
   effectState: Record<string, unknown>;
 }
 
+/**
+ * Spawn probability scale.
+ * Higher weight = more likely to appear.
+ */
+export const SpawnChance = {
+  VERY_LOW: 1,
+  LOW: 2,
+  MEDIUM: 4,
+  HIGH: 6,
+  VERY_HIGH: 8,
+} as const;
+
 export const POWERUP_REGISTRY = new Map<PowerupType, PowerupDefinition>([
   [
     PowerupType.SLOW_MOTION,
@@ -68,7 +80,7 @@ export const POWERUP_REGISTRY = new Map<PowerupType, PowerupDefinition>([
       color: '#00cccc',
       particleColor: '#00ffff',
       icon: 'S',
-      spawnWeight: 1,
+      spawnWeight: SpawnChance.VERY_HIGH,
       duration: 5000,
       onActivate: () => ({}),
       onTick: (modifiers) => {
@@ -84,7 +96,7 @@ export const POWERUP_REGISTRY = new Map<PowerupType, PowerupDefinition>([
       color: '#8800cc',
       particleColor: '#cc44ff',
       icon: 'G',
-      spawnWeight: 1,
+      spawnWeight: SpawnChance.HIGH,
       duration: 5000,
       onActivate: () => ({}),
       onTick: (modifiers) => {
@@ -100,7 +112,7 @@ export const POWERUP_REGISTRY = new Map<PowerupType, PowerupDefinition>([
       color: '#ccaa00',
       particleColor: '#ffdd44',
       icon: '!',
-      spawnWeight: 1,
+      spawnWeight: SpawnChance.HIGH,
       duration: Infinity,
       onActivate: () => ({ charges: 1 }),
       onTick: (modifiers) => {
@@ -123,7 +135,7 @@ export const POWERUP_REGISTRY = new Map<PowerupType, PowerupDefinition>([
       color: '#ee4444',
       particleColor: '#ff6666',
       icon: '2',
-      spawnWeight: 1,
+      spawnWeight: SpawnChance.LOW,
       duration: 20000,
       onActivate: () => ({}),
       onTick: (modifiers) => {
@@ -139,7 +151,7 @@ export const POWERUP_REGISTRY = new Map<PowerupType, PowerupDefinition>([
       color: '#ff6600',
       particleColor: '#ff9944',
       icon: 'M',
-      spawnWeight: 1,
+      spawnWeight: SpawnChance.VERY_LOW,
       duration: Infinity,
       onActivate: () => ({ charges: 1 }),
       onTick: (modifiers, effectState) => {
@@ -157,7 +169,7 @@ export const POWERUP_REGISTRY = new Map<PowerupType, PowerupDefinition>([
       color: '#ff2222',
       particleColor: '#ff4444',
       icon: 'B',
-      spawnWeight: 1,
+      spawnWeight: SpawnChance.LOW,
       duration: Infinity,
       onActivate: () => ({ ready: true }),
       onTick: (modifiers, effectState) => {

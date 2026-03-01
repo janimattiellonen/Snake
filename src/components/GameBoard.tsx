@@ -1,6 +1,6 @@
 import { type RefObject, useEffect, useRef } from 'react';
 import { Direction } from '../types';
-import { COLORS, GRID_HEIGHT, GRID_WIDTH, TICK_SPEED } from '../constants';
+import { COLORS, GRID_HEIGHT, GRID_WIDTH } from '../constants';
 import { PARTICLE_LIFETIME, type RenderState } from '../useSnakeGame';
 import { POWERUP_REGISTRY, PowerupType } from '../powerups';
 
@@ -70,7 +70,7 @@ export function GameBoard({ score, darkMode, disableKeyboard, renderStateRef, on
 
       // Interpolation progress
       const elapsed = performance.now() - rs.lastTickTime;
-      const progress = Math.min(elapsed / TICK_SPEED, 1);
+      const progress = Math.min(elapsed / rs.effectiveTickSpeed, 1);
 
       const now = performance.now();
 

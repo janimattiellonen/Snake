@@ -166,6 +166,7 @@ export interface RenderState {
   apple: Position;
   prevApple: Position | null;
   lastTickTime: number;
+  effectiveTickSpeed: number;
   particles: Particle[];
   gridPowerups: GridPowerup[];
   activeEffects: ActiveEffect[];
@@ -184,6 +185,7 @@ export function useSnakeGame() {
     apple: { x: 0, y: 0 },
     prevApple: null,
     lastTickTime: 0,
+    effectiveTickSpeed: TICK_SPEED,
     particles: [],
     gridPowerups: [],
     activeEffects: [],
@@ -209,6 +211,7 @@ export function useSnakeGame() {
       apple: initialApple,
       prevApple: null,
       lastTickTime: performance.now(),
+      effectiveTickSpeed: TICK_SPEED,
       particles: [],
       gridPowerups: [],
       activeEffects: [],
@@ -540,6 +543,7 @@ export function useSnakeGame() {
 
       // Dynamic tick speed
       const newSpeed = modifiers.tickSpeed ?? TICK_SPEED;
+      renderStateRef.current.effectiveTickSpeed = newSpeed;
       if (newSpeed !== effectiveTickSpeedRef.current) {
         effectiveTickSpeedRef.current = newSpeed;
         setTickSpeedTrigger((t) => t + 1);
