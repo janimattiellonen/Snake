@@ -10,3 +10,8 @@ export const COLORS = {
   snakeBody: '#49bd07',
   freeSpace: '#f3ecec',
 } as const;
+
+export const POWERUP_SPAWN_INTERVAL = 8000;
+export const POWERUP_DESPAWN_TIME = 10000;
+export const POWERUP_MAX_ON_GRID = 2;
+export const POWERUP_SPAWN_CHANCE = 0.4;
