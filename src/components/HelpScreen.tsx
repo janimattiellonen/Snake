@@ -52,6 +52,12 @@ function getPowerupDescription(type: string): string {
       return 'Pass through your own body for 5 seconds.';
     case 'SHIELD':
       return 'Survive one collision with a wall or yourself.';
+    case 'DOUBLE_POINTS':
+      return 'Apples are worth 2 points for 20 seconds.';
+    case 'APPLE_MAGNET':
+      return 'Pulls the apple toward your head when within 3 cells.';
+    case 'BOMB':
+      return 'Press Space to destroy the apple and respawn it elsewhere. Lost when another powerup is picked up.';
     default:
       return '';
   }

@@ -11,6 +11,7 @@ interface GameBoardProps {
   onDirectionChange: (dir: Direction) => void;
   onPause: () => void;
   onSimplePause: () => void;
+  onTriggerBomb: () => void;
 }
 
 const BORDER_PX = 4;
@@ -19,7 +20,7 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-export function GameBoard({ score, darkMode, renderStateRef, onDirectionChange, onPause, onSimplePause }: GameBoardProps) {
+export function GameBoard({ score, darkMode, renderStateRef, onDirectionChange, onPause, onSimplePause, onTriggerBomb }: GameBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const darkModeRef = useRef(darkMode);
@@ -80,11 +81,20 @@ export function GameBoard({ score, darkMode, renderStateRef, onDirectionChange, 
       ctx!.fillStyle = darkModeRef.current ? COLORS.freeSpaceDark : COLORS.freeSpace;
       ctx!.fillRect(BORDER_PX, BORDER_PX, gridW, gridH);
 
-      // Apple
+      // Apple (with interpolation when magnet is pulling)
       ctx!.fillStyle = COLORS.apple;
+      let appleRenderX: number;
+      let appleRenderY: number;
+      if (rs.prevApple) {
+        appleRenderX = lerp(rs.prevApple.x, rs.apple.x, progress);
+        appleRenderY = lerp(rs.prevApple.y, rs.apple.y, progress);
+      } else {
+        appleRenderX = rs.apple.x;
+        appleRenderY = rs.apple.y;
+      }
       ctx!.fillRect(
-        BORDER_PX + rs.apple.x * cellW,
-        BORDER_PX + rs.apple.y * cellH,
+        BORDER_PX + appleRenderX * cellW,
+        BORDER_PX + appleRenderY * cellH,
         cellW,
         cellH,
       );
@@ -129,6 +139,8 @@ export function GameBoard({ score, darkMode, renderStateRef, onDirectionChange, 
       const { snake, prevSnake } = rs;
       const hasGhost = rs.activeEffects.some((e) => e.type === PowerupType.GHOST_MODE);
       const hasShield = rs.activeEffects.some((e) => e.type === PowerupType.SHIELD);
+      const hasBomb = rs.activeEffects.some((e) => e.type === PowerupType.BOMB);
+      const hasMagnet = rs.activeEffects.some((e) => e.type === PowerupType.APPLE_MAGNET);
 
       for (let i = 0; i < snake.length; i++) {
         const curr = snake[i];
@@ -156,6 +168,32 @@ export function GameBoard({ score, darkMode, renderStateRef, onDirectionChange, 
         if (hasShield && i === 0) {
           ctx!.strokeStyle = '#ffdd44';
           ctx!.lineWidth = 2.5;
+          ctx!.strokeRect(
+            BORDER_PX + renderX * cellW - 1,
+            BORDER_PX + renderY * cellH - 1,
+            cellW + 2,
+            cellH + 2,
+          );
+        }
+
+        // Bomb indicator on head
+        if (hasBomb && i === 0) {
+          const pulse = 0.6 + 0.4 * Math.sin(now * 0.008);
+          ctx!.strokeStyle = `rgba(255, 34, 34, ${pulse})`;
+          ctx!.lineWidth = 2;
+          ctx!.strokeRect(
+            BORDER_PX + renderX * cellW - 1,
+            BORDER_PX + renderY * cellH - 1,
+            cellW + 2,
+            cellH + 2,
+          );
+        }
+
+        // Magnet indicator on head
+        if (hasMagnet && i === 0) {
+          const pulse = 0.6 + 0.4 * Math.sin(now * 0.006);
+          ctx!.strokeStyle = `rgba(255, 102, 0, ${pulse})`;
+          ctx!.lineWidth = 2;
           ctx!.strokeRect(
             BORDER_PX + renderX * cellW - 1,
             BORDER_PX + renderY * cellH - 1,
@@ -261,12 +299,16 @@ export function GameBoard({ score, darkMode, renderStateRef, onDirectionChange, 
         case 'P':
           onSimplePause();
           break;
+        case ' ':
+          e.preventDefault();
+          onTriggerBomb();
+          break;
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onDirectionChange, onPause, onSimplePause]);
+  }, [onDirectionChange, onPause, onSimplePause, onTriggerBomb]);
 
   return (
     <div className="game-board-container">

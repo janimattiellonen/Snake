@@ -13,6 +13,7 @@ import {
   type ActiveEffect,
   type EffectContext,
   type GridPowerup,
+  type PowerupType,
   POWERUP_REGISTRY,
   getDefaultModifiers,
   pickWeightedPowerupType,
@@ -36,6 +37,33 @@ function placeApple(snake: Position[]): Position {
     }
   }
   return freeCells[Math.floor(Math.random() * freeCells.length)];
+}
+
+function moveAppleToward(apple: Position, head: Position, snake: Position[]): Position {
+  const occupied = new Set(snake.map((s) => `${s.x},${s.y}`));
+  const dx = head.x - apple.x;
+  const dy = head.y - apple.y;
+
+  // Try moving on the axis with the larger gap first
+  const candidates: Position[] = [];
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    if (dx !== 0) candidates.push({ x: apple.x + Math.sign(dx), y: apple.y });
+    if (dy !== 0) candidates.push({ x: apple.x, y: apple.y + Math.sign(dy) });
+  } else {
+    if (dy !== 0) candidates.push({ x: apple.x, y: apple.y + Math.sign(dy) });
+    if (dx !== 0) candidates.push({ x: apple.x + Math.sign(dx), y: apple.y });
+  }
+
+  for (const pos of candidates) {
+    if (
+      pos.x >= 0 && pos.x < GRID_WIDTH &&
+      pos.y >= 0 && pos.y < GRID_HEIGHT &&
+      !occupied.has(`${pos.x},${pos.y}`)
+    ) {
+      return pos;
+    }
+  }
+  return apple;
 }
 
 function placePowerup(snake: Position[], apple: Position, gridPowerups: GridPowerup[]): Position {
@@ -95,6 +123,7 @@ export interface Particle {
 }
 
 const PARTICLE_COUNT = 8;
+const BOMB_PARTICLE_COUNT = 20;
 const PARTICLE_LIFETIME = 400;
 
 function spawnParticles(cellX: number, cellY: number, now: number, color?: string): Particle[] {
@@ -114,10 +143,28 @@ function spawnParticles(cellX: number, cellY: number, now: number, color?: strin
   return particles;
 }
 
+function spawnBombParticles(cellX: number, cellY: number, now: number, color: string): Particle[] {
+  const particles: Particle[] = [];
+  for (let i = 0; i < BOMB_PARTICLE_COUNT; i++) {
+    const angle = (Math.PI * 2 * i) / BOMB_PARTICLE_COUNT + (Math.random() - 0.5) * 0.3;
+    const speed = 2.5 + Math.random() * 3;
+    particles.push({
+      x: cellX + 0.5,
+      y: cellY + 0.5,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      spawnTime: now,
+      color,
+    });
+  }
+  return particles;
+}
+
 export interface RenderState {
   snake: Position[];
   prevSnake: Position[];
   apple: Position;
+  prevApple: Position | null;
   lastTickTime: number;
   particles: Particle[];
   gridPowerups: GridPowerup[];
@@ -135,6 +182,7 @@ export function useSnakeGame() {
     snake: [],
     prevSnake: [],
     apple: { x: 0, y: 0 },
+    prevApple: null,
     lastTickTime: 0,
     particles: [],
     gridPowerups: [],
@@ -144,6 +192,7 @@ export function useSnakeGame() {
   const directionQueueRef = useRef<Direction[]>([]);
   const lastPowerupSpawnCheckRef = useRef(0);
   const effectiveTickSpeedRef = useRef(TICK_SPEED);
+  const bombTriggeredRef = useRef(false);
 
   const startGame = useCallback(() => {
     const startPos = getRandomStartPosition();
@@ -153,10 +202,12 @@ export function useSnakeGame() {
     directionQueueRef.current = [];
     lastPowerupSpawnCheckRef.current = performance.now();
     effectiveTickSpeedRef.current = TICK_SPEED;
+    bombTriggeredRef.current = false;
     renderStateRef.current = {
       snake: initialSnake,
       prevSnake: initialSnake,
       apple: initialApple,
+      prevApple: null,
       lastTickTime: performance.now(),
       particles: [],
       gridPowerups: [],
@@ -201,6 +252,23 @@ export function useSnakeGame() {
 
   const changeDirection = useCallback((newDir: Direction) => {
     directionQueueRef.current.push(newDir);
+  }, []);
+
+  const triggerBomb = useCallback(() => {
+    bombTriggeredRef.current = true;
+  }, []);
+
+  const spawnPowerupNow = useCallback((type: PowerupType) => {
+    const rs = renderStateRef.current;
+    const pos = placePowerup(rs.snake, rs.apple, rs.gridPowerups);
+    if (pos) {
+      rs.gridPowerups.push({
+        type,
+        position: pos,
+        spawnTime: performance.now(),
+        lifetime: POWERUP_DESPAWN_TIME,
+      });
+    }
   }, []);
 
   // Game loop
@@ -287,6 +355,43 @@ export function useSnakeGame() {
         }
       }
 
+      // --- Bomb trigger (space key) ---
+      if (bombTriggeredRef.current && modifiers.bombReady) {
+        bombTriggeredRef.current = false;
+        // Explode the current apple with a big particle burst
+        rs.particles.push(...spawnBombParticles(rs.apple.x, rs.apple.y, now, '#ff4444'));
+        // Spawn a new apple elsewhere
+        rs.apple = placeApple(rs.snake);
+        // Deactivate the bomb effect
+        rs.activeEffects = rs.activeEffects.filter((e) => e.type !== 'BOMB');
+      } else {
+        bombTriggeredRef.current = false;
+      }
+
+      // --- Apple magnet pull ---
+      if (modifiers.appleMagnet) {
+        const magnetEffect = rs.activeEffects.find((e) => e.type === 'APPLE_MAGNET');
+        const dist = Math.abs(newHead.x - rs.apple.x) + Math.abs(newHead.y - rs.apple.y);
+        const pulling = magnetEffect?.effectState.pulling as boolean | undefined;
+
+        if (dist <= 3 || pulling) {
+          if (magnetEffect) magnetEffect.effectState.pulling = true;
+          const oldApple = { ...rs.apple };
+          // Move apple up to 2 steps per tick so it's faster than the snake
+          let moved = rs.apple;
+          moved = moveAppleToward(moved, newHead, snakeNow);
+          if (moved.x !== newHead.x || moved.y !== newHead.y) {
+            moved = moveAppleToward(moved, newHead, snakeNow);
+          }
+          rs.prevApple = oldApple;
+          rs.apple = moved;
+        } else {
+          rs.prevApple = null;
+        }
+      } else {
+        rs.prevApple = null;
+      }
+
       // --- Powerup pickup (check before collision so shield can apply) ---
       const pickedIndex = rs.gridPowerups.findIndex(
         (gp) => gp.position.x === newHead.x && gp.position.y === newHead.y,
@@ -332,6 +437,11 @@ export function useSnakeGame() {
             };
             def.onTick(modifiers, newEffect.effectState, tickCtx);
           }
+        }
+
+        // Deactivate bomb when picking up any other powerup
+        if (picked.type !== 'BOMB') {
+          rs.activeEffects = rs.activeEffects.filter((e) => e.type !== 'BOMB');
         }
 
         // Spawn pickup particles
@@ -394,12 +504,23 @@ export function useSnakeGame() {
       if (newHead.x === rs.apple.x && newHead.y === rs.apple.y) {
         const grownSnake = [newHead, ...snakeNow];
         const newApple = placeApple(grownSnake);
+        // Consume magnet charge on apple eat
+        if (modifiers.appleMagnet) {
+          for (const effect of rs.activeEffects) {
+            if (effect.type === 'APPLE_MAGNET' && (effect.effectState.charges as number) > 0) {
+              effect.effectState.charges = 0;
+              rs.activeEffects = rs.activeEffects.filter((e) => e !== effect);
+              break;
+            }
+          }
+        }
         const newParticles = [...liveParticles, ...spawnParticles(rs.apple.x, rs.apple.y, now)];
         renderStateRef.current = {
           ...rs,
           snake: grownSnake,
           prevSnake: snakeNow,
           apple: newApple,
+          prevApple: null,
           lastTickTime: now,
           particles: newParticles,
         };
@@ -438,5 +559,7 @@ export function useSnakeGame() {
     simpleResume,
     quitGame,
     changeDirection,
+    triggerBomb,
+    spawnPowerupNow,
   };
 }

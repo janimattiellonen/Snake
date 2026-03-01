@@ -31,6 +31,8 @@ function App() {
     simpleResume,
     quitGame,
     changeDirection,
+    triggerBomb,
+    spawnPowerupNow,
   } = useSnakeGame();
 
   const [titleSubscreen, setTitleSubscreen] = useState<TitleSubscreen>('main');
@@ -81,12 +83,13 @@ function App() {
               onDirectionChange={changeDirection}
               onPause={togglePause}
               onSimplePause={simplePause}
+              onTriggerBomb={triggerBomb}
             />
             {gameState === GameState.PAUSED && (
-              <PauseDialog onQuit={quitGame} onContinue={togglePause} />
+              <PauseDialog onQuit={quitGame} onContinue={togglePause} onSpawnPowerup={spawnPowerupNow} />
             )}
             {gameState === GameState.SIMPLE_PAUSED && (
-              <PauseScreen onResume={simpleResume} />
+              <PauseScreen onResume={simpleResume} onSpawnPowerup={spawnPowerupNow} />
             )}
           </div>
         )}
@@ -100,6 +103,7 @@ function App() {
               onDirectionChange={() => {}}
               onPause={() => {}}
               onSimplePause={() => {}}
+              onTriggerBomb={() => {}}
             />
             <GameOverScreen score={score} onRestart={startGame} />
           </div>

@@ -46,3 +46,37 @@ and powerups mention above.
 
 Show me how you would implement 3 powerups from the list.
 
+
+## New powerups
+
+Scoring
+- Double Points — Apples are worth 2 points for 20 seconds
+- Apple Magnet — The next apple spawns adjacent to the snake's head (easy grab).
+
+Bomb
+- Destroys the current apple in an explosion (bigger particle burst) and spawns a new one elsewhere —
+  useful if the apple is in a dangerous spot. This powerup should stay until used or another powerup is taken.
+- When active, the "bomb" powerup is used by pressing the space key. Mention this in the Help menu
+  under the Bomb powerup.
+
+
+## Powerups menu
+
+As the game is under development, I'd like to be able to choose, what powerup comes next. Create a "Powerups"
+menu (button named "Powerups", use different color then the blue that is used).
+
+List available powerups in the menu. Also index them [1, 2, 3 ...] and show the index number in parentheses.
+The powerup at a given index may be selected either by cliking on the powerup, or pressing the numeric key 
+corresponding to the index number
+
+
+## Changes to Magnet powerup
+
+When the snake's head is within 3 elements of the next apple, make the head pull the apple towards the head, 
+until the apple is eaten. 
+
+If magnet powerup is active and the head comes close enough but passes the apple, the apple starts to "race"
+with the head and tries catching up. Also, the magnet effect is a bit slugish. Can you make the animation of 
+the apple getting drawn closer to the head a bit smoother. 
+
+When the magnet powerup is active, no visible hints is given.

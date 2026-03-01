@@ -4,6 +4,9 @@ export const PowerupType = {
   SLOW_MOTION: 'SLOW_MOTION',
   GHOST_MODE: 'GHOST_MODE',
   SHIELD: 'SHIELD',
+  DOUBLE_POINTS: 'DOUBLE_POINTS',
+  APPLE_MAGNET: 'APPLE_MAGNET',
+  BOMB: 'BOMB',
 } as const;
 
 export type PowerupType = (typeof PowerupType)[keyof typeof PowerupType];
@@ -13,6 +16,8 @@ export interface TickModifiers {
   ghostMode: boolean;
   shieldActive: boolean;
   scoreMultiplier: number;
+  appleMagnet: boolean;
+  bombReady: boolean;
 }
 
 export interface EffectContext {
@@ -110,6 +115,58 @@ export const POWERUP_REGISTRY = new Map<PowerupType, PowerupDefinition>([
       },
     },
   ],
+  [
+    PowerupType.DOUBLE_POINTS,
+    {
+      type: PowerupType.DOUBLE_POINTS,
+      label: 'Double Points',
+      color: '#ee4444',
+      particleColor: '#ff6666',
+      icon: '2',
+      spawnWeight: 1,
+      duration: 20000,
+      onActivate: () => ({}),
+      onTick: (modifiers) => {
+        modifiers.scoreMultiplier *= 2;
+      },
+    },
+  ],
+  [
+    PowerupType.APPLE_MAGNET,
+    {
+      type: PowerupType.APPLE_MAGNET,
+      label: 'Apple Magnet',
+      color: '#ff6600',
+      particleColor: '#ff9944',
+      icon: 'M',
+      spawnWeight: 1,
+      duration: Infinity,
+      onActivate: () => ({ charges: 1 }),
+      onTick: (modifiers, effectState) => {
+        if ((effectState.charges as number) > 0) {
+          modifiers.appleMagnet = true;
+        }
+      },
+    },
+  ],
+  [
+    PowerupType.BOMB,
+    {
+      type: PowerupType.BOMB,
+      label: 'Bomb',
+      color: '#ff2222',
+      particleColor: '#ff4444',
+      icon: 'B',
+      spawnWeight: 1,
+      duration: Infinity,
+      onActivate: () => ({ ready: true }),
+      onTick: (modifiers, effectState) => {
+        if (effectState.ready) {
+          modifiers.bombReady = true;
+        }
+      },
+    },
+  ],
 ]);
 
 export function getDefaultModifiers(): TickModifiers {
@@ -118,6 +175,8 @@ export function getDefaultModifiers(): TickModifiers {
     ghostMode: false,
     shieldActive: false,
     scoreMultiplier: 1,
+    appleMagnet: false,
+    bombReady: false,
   };
 }
 
